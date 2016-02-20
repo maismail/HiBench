@@ -120,11 +120,11 @@ public class TestDFSIOEnh extends Configured implements Tool {
   private static final String DEFAULT_TPUT_RESFILE_NAME =
       "TestDFSIOEnh_Tput.csv";  //result file name
   private static final int DEFAULT_TPUT_SAMPLING_INTERVAL = 500;
-      //sample interval in milliseconds.
+  //sample interval in milliseconds.
   private static final long DEFAULT_TPUT_SAMPLE_UNIT = MEGA;
-      // the unit of sample
+  // the unit of sample
   private static final int DEFAULT_TPUT_PLOT_INTERVAL = 1000;
-      //plot interval in milliseconds
+  //plot interval in milliseconds
 
   
   protected static class IOStatistics {
@@ -529,6 +529,7 @@ public class TestDFSIOEnh extends Configured implements Tool {
     int tputPlotInterval = DEFAULT_TPUT_PLOT_INTERVAL;
     long tputSampleUnit = DEFAULT_TPUT_SAMPLE_UNIT;
     float threshold = 0.5f;
+    int maxConcurrentMaps = 2;
 
     String version = "TestFDSIO.0.0.4 Enhanced Version";
     String usage =
@@ -595,6 +596,8 @@ public class TestDFSIOEnh extends Configured implements Tool {
         } else {
           LOG.warn("Illegal format of parameter \"sampleUnit\", Ignored.");
         }
+      }else if(args[i].equals("-maxConcurrentMaps")){
+        maxConcurrentMaps = Integer.parseInt(args[++i]);
       }
     }
 
@@ -613,15 +616,7 @@ public class TestDFSIOEnh extends Configured implements Tool {
 
       //get the configuration of max number of concurrent maps
       JobConf dummyConf = new JobConf(fsConfig, TestDFSIOEnh.class);
-      JobClient jc = new JobClient(dummyConf);
-      int maxreduces = jc.getDefaultReduces();
-      int reducesPerNode =
-          fsConfig.getInt("mapred.tasktracker.reduce.tasks.maximum", 2);
-      int nodenum = maxreduces / reducesPerNode;
-      int mapPerNum =
-          fsConfig.getInt("mapred.tasktracker.map.tasks.maximum", 2);
-      int mapSlots = mapPerNum * nodenum;
-      LOG.info("maximum concurrent maps = " + String.valueOf(mapSlots));
+      LOG.info("maximum concurrent maps = " + String.valueOf(maxConcurrentMaps));
 
       if (isSequential) {
         long tStart = System.currentTimeMillis();
@@ -650,10 +645,12 @@ public class TestDFSIOEnh extends Configured implements Tool {
             /*analyzeResult(fs, testType, execTime, resFileName, nrFiles, fileSize*MEGA, 
                     tStart, tputPlotInterval, tputSampleUnit,(int)(mapSlots*threshold),
                     tputFileName, tputReportEach, tputReportTotal);*/
+        int concurrency_threshold =
+            (int) (Math.min(maxConcurrentMaps, nrFiles) * threshold);
+        LOG.info("Concurrency Threshold = " + concurrency_threshold);
         runAnalyse(fs, fsConfig, testType, execTime, resFileName, nrFiles,
             fileSize * MEGA,
-            tStart, tputPlotInterval, tputSampleUnit,
-            (int) (mapSlots * threshold),
+            tStart, tputPlotInterval, tputSampleUnit, concurrency_threshold,
             tputFileName, tputReportEach, tputReportTotal);
       }
     } catch (Exception e) {
