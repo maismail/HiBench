@@ -647,6 +647,7 @@ public class TestDFSIOEnh extends Configured implements Tool {
                     tputFileName, tputReportEach, tputReportTotal);*/
         int concurrency_threshold =
             (int) (Math.min(maxConcurrentMaps, nrFiles) * threshold);
+        concurrency_threshold = Math.max(concurrency_threshold, 1);
         LOG.info("Concurrency Threshold = " + concurrency_threshold);
         runAnalyse(fs, fsConfig, testType, execTime, resFileName, nrFiles,
             fileSize * MEGA,
