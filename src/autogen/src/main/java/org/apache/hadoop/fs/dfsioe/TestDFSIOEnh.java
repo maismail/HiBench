@@ -1037,7 +1037,7 @@ public class TestDFSIOEnh extends Configured implements Tool {
       lines.close();
       if (tputReportEach) {
         FileUtil.copy(fs, REPORT_TMP,
-            new File(tputResFileName.split(".")[0] + "test_io_.csv"), false,
+            new File(new File(tputResFileName).getParentFile(), "test_io_.csv"), false,
             fsConfig);
         LOG.info("*test_io_.csv fetched to local fs.");
       }
